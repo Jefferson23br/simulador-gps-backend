@@ -17,3 +17,21 @@
     "express": "^5.1.0"
   }
 }
+{
+  "name": "simulador-gps-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.4.0",
+    "@mapbox/polyline": "^1.2.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
