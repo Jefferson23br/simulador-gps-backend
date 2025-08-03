@@ -3,15 +3,15 @@ require('dotenv').config();
 const express = require('express');
 const { Client } = require('@googlemaps/google-maps-services-js');
 const polyline = require('@mapbox/polyline');
+const cors = require('cors'); // <--- 1. IMPORTADO O CORS
 
 // Instancia o cliente do Express e do Google Maps
 const app = express();
 app.use(express.json()); // Habilita o parsing de JSON no corpo das requisições
+app.use(cors()); // <--- 2. HABILITADO O CORS PARA TODAS AS REQUISIÇÕES
 const mapsClient = new Client({});
 
 // --- Funções Auxiliares de Geometria ---
-// Precisamos recriar a matemática que a biblioteca de utilitários do Android fazia.
-
 /**
  * Calcula a distância entre dois pontos usando a fórmula de Haversine.
  * @returns {number} Distância em metros.
@@ -48,6 +48,7 @@ app.post('/simulate-route', async (req, res) => {
             params: {
                 origin: origin,
                 destination: destination,
+                // <--- 3. CORRIGIDO O NOME DA VARIÁVEL DA CHAVE DE API
                 key: process.env.Maps_API_KEY,
             },
         });
@@ -72,7 +73,6 @@ app.post('/simulate-route', async (req, res) => {
             const segmentDistance = getDistance(startPoint, endPoint);
             const segmentDuration = segmentDistance / speedMps;
 
-            // Gera um ponto a cada segundo para este segmento
             const stepsInSegment = Math.round(segmentDuration);
             for (let j = 0; j < stepsInSegment; j++) {
                 const fraction = j / stepsInSegment;
@@ -82,14 +82,12 @@ app.post('/simulate-route', async (req, res) => {
                 simulationSteps.push({
                     lat: currentLat,
                     lng: currentLng,
-                    // Timestamp relativo em milissegundos desde o início da viagem
                     timestamp: Math.round(elapsedTimeSeconds * 1000) 
                 });
                 elapsedTimeSeconds++;
             }
         }
         
-        // Adiciona o ponto final para garantir que a rota termine exatamente no destino
         const lastPoint = decodedPath[decodedPath.length - 1];
         simulationSteps.push({
             lat: lastPoint.lat,
@@ -104,7 +102,8 @@ app.post('/simulate-route', async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        // Adiciona um log mais detalhado do erro no servidor para facilitar a depuração
+        console.error("Erro detalhado no backend:", error.response ? error.response.data : error.message);
         res.status(500).json({ error: 'Ocorreu um erro ao processar a rota.' });
     }
 });
@@ -112,6 +111,7 @@ app.post('/simulate-route', async (req, res) => {
 
 // --- Iniciar o Servidor ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor de simulação de GPS rodando na porta ${PORT}`);
+// <--- 4. AJUSTADO O LISTEN PARA AMBIENTES DE NUVEM
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor de simulação de GPS rodando na porta ${PORT} e acessível na rede`);
 });
